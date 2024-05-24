@@ -10,3 +10,9 @@ Research Questions:
 2) Rigity reduces blood flow. Therefore, what is the corelation between SCD and other diseases overall?
 3) Rbcs with defective haemoglobin show higher affinity for nitric oxide. What is the percentage of nitric oxide within sickle cells compared to normal cells
 4) How can we study the interaction between haemoglobin and CO2(conformational changes)? How can we study the polymerization into rigid structures of Hbs?
+
+PDB of Heboglobin S bound to carbon monoxide: 5UFJ
+
+PDB of 2 HBs: 2HBS
+
+Normal hemoglobin: pbd1a00.ent
