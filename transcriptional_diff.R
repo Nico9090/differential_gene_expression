@@ -1,17 +1,24 @@
 #importing needed libraries
-
+library(tidyverse)
+library(EnhancedVolcano)
+library(DESeq2)
 #Adding and viewing data 
-data<-read.delim("GSE232221_raw_counts_GRCh38.p13_NCBI.tsv")
+data<-read.delim("~/Bioinformatics Projects/GSE232221_raw_counts_GRCh38.p13_NCBI.tsv")
 View(data)
-
+d=data[1:37,]
 #Add annotation sheet
 
-annot<-read.delim("Human.GRCh38.p13.annot.tsv")
+annot<-read.delim("~/Bioinformatics Projects/Human.GRCh38.p13.annot.tsv")
 View(annot)
+a=annot[1:37,]
 
-# Viewing the type of arrangement needed momentarily
-dataset<-data.frame(x=annot$Symbol,HbA_sample1=data$GSM7321059)
-print(head(dataset))
+#Creating a new data frame of selected data
+table1<-data.frame(d,a)
+Genes<-d$GSM7321059
+Counts<-a$Symbol
+y<-fct_reorder(Counts,Genes)
 
-#Preparing volcano plot
-dds = DESeqDataSetFromMatrix(dataset,Metadata,~type)
+
+#Applying levels to the gene symbols so that graph is clear
+ggplot(data=table1,mapping=aes(x=Genes,fct_reorder(Counts,Genes)))+
+  geom_point()
