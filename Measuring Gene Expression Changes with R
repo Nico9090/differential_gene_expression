@@ -1,0 +1,13 @@
+Experimental Design:
+
+To understand how the creation of red blood cells is impacted by transcriptional changes in sickle cell anemia, researchers gathered 10 
+reticulocyte samples with the same genes. 5 were sickle cell reticulocytes with HbS while the other 5 were normal reticulocytes with HbA.
+Changes in transcription were counted among the genes.
+
+
+Computational Workflow:
+1) Download tsv of raw counts and human gene annotation table from NCBI
+2) With R, transform the data so that it is sensible to graph and draw conclusions.
+3) Visualize the data 
+4) Write possible conclusions
+6) Develop new research idea
