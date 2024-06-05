@@ -3,13 +3,21 @@
 options= '''red orange yellow green blue indigo violet'''.split(' ')
 
 chosen_colors=[]
-for color in options:
-        for x in range(options.index(color),len(options)-1):
-                if color!=options[x]:
-                        choice= input(f'{color} or {options[options.index(color)+x+1]}: ')
-                        if choice != color and choice !=options[options.index(color)+1]:
-                                print('Error! Select one of the above options')
-                                continue
-        #chosen_colors.append(choice)
 
-#print(chosen_colors.count('red'))
+i=0
+j=-1
+
+while options[i]!=options[j] and i<len(options):
+        choice=input(f'{options[i]} or {options[j]}: ')
+        if choice!= options[i] and choice !=options[j]:
+                print('Error! Select one of the options')
+                choice=input(f'{options[i]} or {options[j]}: ')
+        if choice == options[i] or choice == options[j]:
+                chosen_color.append(choice)
+        j-=1
+        if options[j]==options[i]:
+                j=-1
+                i+=1
+opt_dict={}
+opt_dict(keys)=color for color in options
+opt_dict(values)=chosen_colors.count(color)
