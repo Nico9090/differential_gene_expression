@@ -13,11 +13,13 @@ while options[i]!=options[j] and i<len(options):
                 print('Error! Select one of the options')
                 choice=input(f'{options[i]} or {options[j]}: ')
         if choice == options[i] or choice == options[j]:
-                chosen_color.append(choice)
+                chosen_colors.append(choice)
         j-=1
         if options[j]==options[i]:
                 j=-1
                 i+=1
-opt_dict={}
-opt_dict(keys)=color for color in options
-opt_dict(values)=chosen_colors.count(color)
+
+for color in options:
+        print(color,chosen_colors.count(color),sep=':')
+
+
