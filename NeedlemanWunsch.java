@@ -41,34 +41,26 @@ public class NeedlemanWunsch{
         }
     }
     public void doAlgorithm(){
-        nm_matrix[1][1]=0;
-        nm_matrix[1][2]=0;
-        for (int num=1,mismatch=-1;num< this.nrow;num++,mismatch--){
-            nm_matrix[1][num]=mismatch;
+        //Column values -1,-2,...
+        for (int num=1,val=0;num< this.nrow;num++,val--){
+            nm_matrix[1][num]=val;
         }
-
-        for (int num=1,match=1;num< this.nrow;num++,match--){
-            nm_matrix[num][1]=match;
-        }
-        for (int start=0,num=2; start < this.nrow && num <this.nrow;start++, num++){
-            if (seq1.charAt(start)==seq2.charAt(start)){
-            nm_matrix[num][num]++;
-        }
-        
-
+        //Row values -1,-2,...
+        for (int num=1,val=0;num< this.nrow;num++,val--){
+            nm_matrix[num][1]=val;
         }
     }
-    public void update(){
-        if(seq1.charAt(0)==seq2.charAt(0)){
-            int a=nm_matrix[1][1]+this.match;
-            int b=nm_matrix[1][2]+this.match;
-            int c=nm_matrix[2][1]+this.match;
-            nm_matrix[2][2]=Math.max(Math.max(a,b),c);
-            System.out.println("a : "+  a);
-            System.out.println("b : "+  b);
-            System.out.println("c : "+  c);
-            System.out.println("nm_matrix[1][1] : "+  nm_matrix[1][1] );
-            System.out.println("match : "+  this.match );
+    public void update(){ //doesn't work yet
+        for(int k=0;k<seq1.length();k++){
+            for(int i=0,j=1,r=2;i<this.nrow-1 && j<this.nrow-1;i++,j++,r++){
+                if(seq1.charAt(k)==seq2.charAt(i)){
+                    int a =nm_matrix[1][j]+this.match;
+                    int b =nm_matrix[1][j+1]+this.match;
+                    int c= nm_matrix[j+1][i]+this.match;
+                    nm_matrix[2][r]=Math.max(Math.max(a,b),c);
+            }
         }
+        }
+        
     }
 }
