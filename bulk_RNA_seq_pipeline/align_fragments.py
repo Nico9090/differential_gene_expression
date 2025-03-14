@@ -8,7 +8,7 @@ def build_index(organism_genome,outfile_header):
 build_index("","genome") #add path to organism genome
 
 def align(forward,reverse,outfile_header):
-  subprocess.run(["hisat2", "-x", index_file_header, "-1", fq_1, "-2", fq_2, "-S", output_sam])
+  subprocess.run(["hisat2", "-x", index_file_header, "-1", forward, "-2", reverse, "-S", output_sam])
   return None
 align("","","output") #add forward and reverse fastq that make up the paired end reads
 
