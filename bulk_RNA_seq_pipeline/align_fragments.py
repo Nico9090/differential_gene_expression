@@ -12,4 +12,9 @@ def align(forward,reverse,outfile_header):
   return None
 align("","","output") #add forward and reverse fastq that make up the paired end reads
 
+def create_and_sort_BAM(SAM_file,outfile,sorted_outfile):
+  subprocess.run(["samtools view", "-Sb", SAM_file, ">", outfile])
+  subprocess.run(["samtools sort", "-o", sorted_outfile, outfile])
+  return None
 
+create_and_sort_BAM("","","") #inpput the SAM,BAM,and,sorted BAM paths
