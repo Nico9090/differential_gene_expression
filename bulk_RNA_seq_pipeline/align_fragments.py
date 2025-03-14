@@ -18,3 +18,7 @@ def create_and_sort_BAM(SAM_file,outfile,sorted_outfile):
   return None
 
 create_and_sort_BAM("","","") #inpput the SAM,BAM,and,sorted BAM paths
+
+def generate_read_counts(gtf_outfile,sorted_bam):
+  subprocess.run(["stringtie", "-o ", gtf_outfile, sorted_bam])
+  return None
