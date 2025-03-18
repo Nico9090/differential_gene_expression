@@ -10,4 +10,5 @@
 
 module load python
 python align_fragments.py
+#/path/to/programs/hisat2/hisat2-build /path/to/programs/ncbi_dataset/data/GCF_000001405.40/GCF_000001405.40_GRCh38.p14_genomic.fna genome
 echo "Process Complete!"
