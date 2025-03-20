@@ -33,10 +33,11 @@ align(f"{index_file_path}genome",f"{fastq_path}S16_1.fq",f"{fastq_path}S16_2.fq"
 ###############################################################################################
 #Need to create .bam files out of .sam to for gene counting
 def create_and_sort_BAM(SAM_file,outfile,sorted_outfile):
-        subprocess.run(["samtools view", "-Sb", SAM_file, ">", outfile])
-        subprocess.run(["samtools sort", "-o", sorted_outfile, outfile])
+        with open(outfile, "wb")as out:
+                 subprocess.run(["samtools", "view", "-Sb", SAM_file],stdout=out)
+        with open(sorted_outfile, "wb")as sorted_out:
+                subprocess.run(["samtools", "sort", "-o", sorted_outfile],stdout=sorted_out)
         return "BAM Generated!"
-
 SAM_list=[] #add the names of the .SAM files here once created
 #for file in SAM_list:
 #       file_header=file[0:file.index(".")]
