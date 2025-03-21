@@ -44,6 +44,9 @@ SAM_list=[] #add the names of the .SAM files here once created
 #       create_and_sort_BAM(file,f"{file_header}.bam",f"{file_header}_sorted.bam")
 
 
-def generate_read_counts(gtf_outfile,sorted_bam):
-  subprocess.run(["stringtie", "-o ", gtf_outfile, sorted_bam])
-  return None
+#def generate_read_counts(gtf_outfile,sorted_bam):
+#  subprocess.run(["stringtie", "-o ", gtf_outfile, sorted_bam])
+#  return None
+
+def gen_counts():
+        subprocess.run(["Rscript", sam_toCounts.R])
