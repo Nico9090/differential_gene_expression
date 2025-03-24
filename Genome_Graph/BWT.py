@@ -14,8 +14,15 @@ def left_circular_shift(string):
                 x+=1
         return all_left_circular_shifts
 
-lc_shifts=left_circular_shift(tString))
+lc_shifts=left_circular_shift(tString)
 
 sorted_lc_shifts=sorted(lc_shifts)
-
-df=pd.DataFrame()
+bwt = ''.join([shift[-1] for shift in sorted_lc_shifts])
+#BWT table
+data={
+    'Circular Shifts': lc_shifts,
+    'Sorted Circular Shifts': sorted_lc_shifts,
+    'BWT': [bwt]*len(lc_shifts)
+}
+df=pd.DataFrame(data)
+print(df)
