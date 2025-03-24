@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import pandas as pd
 #BW transform
 seq="GACTATATCCTAAATACCCGCACCATTACCGACACCCGTGGCCCAAGCAG"
 tString=seq + "$"
@@ -13,4 +14,8 @@ def left_circular_shift(string):
                 x+=1
         return all_left_circular_shifts
 
-print(left_circular_shift(tString))
+lc_shifts=left_circular_shift(tString))
+
+sorted_lc_shifts=sorted(lc_shifts)
+
+df=pd.DataFrame()
