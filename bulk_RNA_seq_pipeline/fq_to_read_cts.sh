@@ -11,4 +11,6 @@
 module load python
 python align_fragments.py
 #/path/to/programs/hisat2/hisat2-build /path/to/programs/ncbi_dataset/data/GCF_000001405.40/GCF_000001405.40_GRCh38.p14_genomic.fna genome
+#awk '$1 ~ /^[1-9]$|^1[0-9]$|^19$/' Mus_musculus.GRCm39.113.gtf > autosomes_only.gtf #for obtaining non sex chromosomes only gtf
+
 echo "Process Complete!"
