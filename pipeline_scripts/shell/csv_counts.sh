@@ -10,7 +10,7 @@
 #micromamba activate r-env
 #___________________________________________________________________
 #Main programs 
-Rscript sam_toCounts.R
+Rscript make_counts.R
 #Status check
 if [ $? -ne 0 ]; then
   echo "Error from sam_toCounts.R execution" >&2
