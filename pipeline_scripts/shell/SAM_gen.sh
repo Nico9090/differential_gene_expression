@@ -12,7 +12,7 @@
 #___________________________________________________________________
 #Main programs
 module load python 
-python align_fragments.py #script uses HISAT2 to generate SAM files
+python BAM_SAM.py #script uses HISAT2 to generate SAM files
 #Status check
 if [ $? -ne 0 ]; then
   echo "Error from align_fragments.py execution" >&2
