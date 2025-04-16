@@ -6,6 +6,7 @@ import os
 #Example genome: GCF_000001405.40_GRCh38.p14_genomic.fna
 #Example outfile_header: index, output: index.ht2, index.ht3
 human_genome="GCF_000001405.40_GRCh38.p14_genomic.fna"
+outfile_name="index"
 def build_index(
         genome,
         outfile_header
@@ -15,12 +16,13 @@ def build_index(
                         outfile_header])
         return "Index building complete!"
 
-build_index(human_genome,index)
+build_index(human_genome,
+            outfile_name)
 
 #________________________________________________________________________________
 #Step 2: Obtain SAMs by aligning FASTQs__________________________________________
 fastq_path="/path/to/fastq/"
-index_file_path="/path/to/index_files/" #genome* files just created
+index_file_path="/path/to/index_files/" #index* files just created
 def align(
         index_file_header,
         forward,
@@ -34,16 +36,12 @@ def align(
                         output_sam])
         return "Alignment Complete!"
 
-align(f"{index_file_path}genome",f"{fastq_path}S12_1.fq",f"{fastq_path}S12_2.fq",
-        "S12.sam")
-align(f"{index_file_path}genome",f"{fastq_path}S13_1.fq",f"{fastq_path}S13_2.fq",
-        "S13.sam")
-align(f"{index_file_path}genome",f"{fastq_path}S14_1.fq",f"{fastq_path}S14_2.fq",
-        "S14.sam")
-align(f"{index_file_path}genome",f"{fastq_path}S15_1.fq",f"{fastq_path}S15_2.fq",
-        "S15.sam")
-align(f"{index_file_path}genome",f"{fastq_path}S16_1.fq",f"{fastq_path}S16_2.fq",
-        "S16.sam")
+fastq_pairs=[]
+fastq_pairs.append(("R1.fastq","R2.fastq"))#add pairs of fastq files
+align(f"{index_file_path}{outfile_name}",
+      f"{fastq_path}{fastq_pairs[0][0]}",
+      f"{fastq_path}{fastq_pairs[0][1]}",
+      f"{fastq_pairs[0][0][:index(".")+1]}.sam")
 
 ###############################################################################################
 #Need to create .bam files out of .sam to for gene counting
