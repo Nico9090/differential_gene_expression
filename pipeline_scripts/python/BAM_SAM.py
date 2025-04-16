@@ -37,29 +37,37 @@ def align(
         return "Alignment Complete!"
 
 fastq_pairs=[]
-fastq_pairs.append(("R1.fastq","R2.fastq"))#add pairs of fastq files
-align(f"{index_file_path}{outfile_name}",
-      f"{fastq_path}{fastq_pairs[0][0]}",
-      f"{fastq_path}{fastq_pairs[0][1]}",
-      f"{fastq_pairs[0][0][:index(".")+1]}.sam")
+fastq_pairs.extend(
+        ("fastq1_R1.fastq","fastq1_R2.fastq"),
+        ("fastq2_R1.fastq","fastq2_R2.fastq"))#replace with actual pairs of fastq files
 
-###############################################################################################
-#Need to create .bam files out of .sam to for gene counting
-def create_and_sort_BAM(SAM_file,outfile,sorted_outfile):
+for file in fastq_pairs: #alingment
+        align(f"{index_file_path}{outfile_name}",
+              f"{fastq_path}{file[0]}",
+              f"{fastq_path}{file[1]}",
+              f"{file[0].split('.')[0]}.sam")
+#______________________________________________________________________________________________
+#(OPTIONAL)Step 3: BAM files need alternative end pipeline
+def create_and_sort_BAM(
+        SAM_file,
+        outfile,
+        sorted_outfile):
         with open(outfile, "wb")as out:
-                 subprocess.run(["samtools", "view", "-Sb", SAM_file],stdout=out)
+                 subprocess.run(
+                         ["samtools", 
+                          "view", 
+                          "-Sb", 
+                          SAM_file],
+                         stdout=out)
         with open(sorted_outfile, "wb")as sorted_out:
-                subprocess.run(["samtools", "sort", "-o", sorted_outfile],stdout=sorted_out)
+                subprocess.run(
+                        ["samtools", 
+                         "sort", 
+                         "-o", 
+                         sorted_outfile],
+                        stdout=sorted_out)
         return "BAM Generated!"
 SAM_list=[] #add the names of the .SAM files here once created
-#for file in SAM_list:
-#       file_header=file[0:file.index(".")]
-#       create_and_sort_BAM(file,f"{file_header}.bam",f"{file_header}_sorted.bam")
-
-
-#def generate_read_counts(gtf_outfile,sorted_bam):
-#  subprocess.run(["stringtie", "-o ", gtf_outfile, sorted_bam])
-#  return None
-
-def gen_counts():
-        subprocess.run(["Rscript", sam_toCounts.R])
+for file in SAM_list:
+       file_header=file[0:file.index(".")]
+       create_and_sort_BAM(file,f"{file_header}.bam",f"{file_header}_sorted.bam")
