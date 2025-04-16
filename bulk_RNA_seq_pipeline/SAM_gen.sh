@@ -1,8 +1,8 @@
 #!/bin/bash
 #SLURM OPTIONS_____________________________________________________
-#SBATCH -J "Bulk_RNA_Seq_Data_Transformation.HISAT2"
-#SBATCH -o "fq_transform.out"
-#SBATCH -e "fq_transform.err"
+#SBATCH -J "SAM_File_Creation_Using_HISAT2"
+#SBATCH -o "fastq_transform.out"
+#SBATCH -e "fastq_transform.err"
 #___________________________________________________________________
 #Adjust environment if needed
 
