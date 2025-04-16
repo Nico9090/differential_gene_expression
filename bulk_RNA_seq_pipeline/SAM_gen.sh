@@ -3,7 +3,13 @@
 #SBATCH -J "Bulk_RNA_Seq_Data_Transformation.HISAT2"
 #SBATCH -o "fq_transform.out"
 #SBATCH -e "fq_transform.err"
-#__________________________________________________________________
+#___________________________________________________________________
+#Adjust environment if needed
+
+#eval "$(micromamba shell hook --shell bash)"
+#micromamba activate bulk_RNA_seq 
+
+#___________________________________________________________________
 #Main programs
 module load python 
 python align_fragments.py #script uses HISAT2 to generate SAM files
@@ -14,5 +20,6 @@ if [ $? -ne 0 ]; then
 else
   echo "Process Complete!"
 fi
+
 
 #__________________________________________________________________
