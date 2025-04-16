@@ -1,16 +1,18 @@
 #!/bin/bash
-#SBATCH -J "Bulk_RNA_Seq_Data_Transformation.HISAT2_STRINGTIE"
+#SLURM OPTIONS_____________________________________________________
+#SBATCH -J "Bulk_RNA_Seq_Data_Transformation.HISAT2"
 #SBATCH -o "fq_transform.out"
 #SBATCH -e "fq_transform.err"
-#SBATCH --partition=long
-#SBATCH --array=0-17
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=70
-#SBATCH --mem=300G
+#__________________________________________________________________
+#Main programs
+module load python 
+python align_fragments.py #script uses HISAT2 to generate SAM files
+#Status check
+if [ $? -ne 0 ]; then
+  echo "Error from align_fragments.py execution" >&2
+  exit 1
+else
+  echo "Process Complete!"
+fi
 
-module load python
-python align_fragments.py
-#/path/to/programs/hisat2/hisat2-build /path/to/programs/ncbi_dataset/data/GCF_000001405.40/GCF_000001405.40_GRCh38.p14_genomic.fna genome
-#awk '$1 ~ /^[1-9]$|^1[0-9]$|^19$/' Mus_musculus.GRCm39.113.gtf > autosomes_only.gtf #for obtaining non sex chromosomes only gtf
-
-echo "Process Complete!"
+#__________________________________________________________________
