@@ -1,22 +1,37 @@
 import subprocess
 import os
-program_path="/path/to/programs" #Use in absence of exported path
+#_________________________________________________________________________________
+#Programs_________________________________________________________________________
+#Step 1___________________________________________________________________________
+#Example genome: GCF_000001405.40_GRCh38.p14_genomic.fna
+#Example outfile_header: index, output: index.ht2, index.ht3
+human_genome="GCF_000001405.40_GRCh38.p14_genomic.fna"
+def build_index(
+        genome,
+        outfile_header
+): #run once per genome
+        subprocess.run([f"hisat2-build", 
+                        genome, 
+                        outfile_header])
+        return "Index building complete!"
 
-#Output is .ht2 files which represent indices for segments of the chosen genome
-#Only need to run once per genome
-def build_index(organism_genome,outfile_header):
-        subprocess.run([f"hisat2-build", organism_genome, outfile_header])
-        return "Complete!"
+build_index(human_genome,index)
 
-#build_index("GCF_000001405.40_GRCh38.p14_genomic.fna","genome") #uncomment to run
-
-#############################################################################
-
-#Output is .sam which represents sequence alignment
+#________________________________________________________________________________
+#Step 2: Obtain SAMs by aligning FASTQs__________________________________________
 fastq_path="/path/to/fastq/"
-index_file_path="/path/to/index_files/"
-def align(index_file_header,forward,reverse,output_sam): #forward and reverse are fastq files
-        subprocess.run(["hisat2", "-x", index_file_header, "-1", forward, "-2", reverse, "-S", output_sam])
+index_file_path="/path/to/index_files/" #genome* files just created
+def align(
+        index_file_header,
+        forward,
+        reverse,
+        output_sam
+): #forward and reverse are fastq files
+        subprocess.run(["hisat2", "-x", 
+                        index_file_header, "-1", 
+                        forward, "-2", 
+                        reverse, "-S", 
+                        output_sam])
         return "Alignment Complete!"
 
 align(f"{index_file_path}genome",f"{fastq_path}S12_1.fq",f"{fastq_path}S12_2.fq",
