@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import pandas as pd
-#BW transform
+#BW transform__________________________________________
 seq="GACTATATCCTAAATACCCGCACCATTACCGACACCCGTGGCCCAAGCAG"
 tString=seq + "$"
 print(tString)
