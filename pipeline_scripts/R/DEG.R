@@ -1,5 +1,4 @@
 #LIBRARIES______________________________________________________________________
-#_______________________________________________________________________________
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 suppressWarnings(suppressMessages(library(tximport)))
 suppressWarnings(suppressMessages(library(DESeq2)))
@@ -24,10 +23,10 @@ library(biomaRt)
 library(goseq)
 library(dplyr)
 #_______________________________________________________________________________
-#FASTQs are aligned to gtf 
-counts_csv<-"" #should have gene names from ens_names.R
-counts<-read_csv(counts_csv) 
-#PCA PLOT_______________________________________________________________________
+#LOAD DATA
+counts<-read_csv("") #add the file with the counts
+#_______________________________________________________________________________
+#PCA set-up_____________________________________________________________________
 make_PCA<-function(counts_data,design,group,...){
   counts_data<-counts_data %>% select(where(is.numeric))
   meta_data_variables<-list(...) #add variables such as diseased states and sex
@@ -47,7 +46,9 @@ make_PCA<-function(counts_data,design,group,...){
     dds=dds,
     pl=pl,
     percentVar=percentVar))
-}
+} #do this first before plotting
+#________________________________________________________________________________
+#PCA PLOT________________________________________________________________________
 plot_PCA<-function(pl,percentVar,title){
   ggplot(pl,aes(PC1,PC2,
                 shape=sex,
@@ -66,7 +67,8 @@ plot_PCA<-function(pl,percentVar,title){
     plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
   )
 }
-
+#_____________________________________________________________________
+#VOLCANO PLOT_________________________________________________________
 plot_Volcano<-function(dds,title){
   ### Deseq2 differential expression calculation
   res <- results(dds)#, name="condition_WT_vs_L1")
@@ -98,4 +100,37 @@ plot_Volcano<-function(dds,title){
                                         size = 3,
                                         family = "Courier"))
   return(res_df)
+}
+#______________________________________________________________________________________
+#Gene Ontology Set-up__________________________________________________________________
+DEG_table<-write_csv(res_df,"") #create csv file of DEG table
+plot_GO<-function(ensembl_genome,table_DEG){
+  ensembl <- useMart("ensembl", 
+                     dataset = ensembl_genome)
+  lengths <- getBM(
+    attributes = c("ensembl_gene_id", 
+                   "start_position", 
+                   "end_position"
+                  ),
+  filters = "ensembl_gene_id",
+  values =table_DEG$Gene_ID,
+  mart = ensembl
+  )
+  lengths$dist=lengths$end_position-lengths$start_position
+  table_DEG$length<-lengths$dist
+  sigData <- as.integer(!is.na(table_DEG$padj) & table_DEG$padj < 0.01)
+  names(sigData) <- table_DEG$Gene_ID
+  pwf <- nullp(sigData, "mm10", "ensGene", bias.data = table_DEG$length)#probability weight function
+  goResults <- goseq(pwf, "mm10","ensGene", test.cats=c("GO:BP"))
+  #PLOT
+  goResults %>% 
+    top_n(10, wt=-over_represented_pvalue) %>% 
+    mutate(hitsPerc=numDEInCat*100/numInCat) %>% 
+    ggplot(aes(x=hitsPerc, 
+               y=term, 
+               colour=over_represented_pvalue, 
+               size=numDEInCat)) +
+        geom_point() +
+        expand_limits(x=0) +
+        labs(x="Hits (%)", y="GO term", colour="p value", size="Count")
 }
