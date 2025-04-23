@@ -29,3 +29,19 @@ library(dplyr)
 counts_csv<-"" #should have gene names from ens_names.R
 counts<-read_csv(counts_csv) 
 #PCA PLOT_______________________________________________________________________
+make_PCA<-function(counts_data,design,group,...){
+  counts_data<-counts_data %>% select(where(is.numeric))
+  meta_data_variables<-list(...) #add variables such as diseased states and sex
+  meta_data<- as.data.frame(meta_data_variables)
+  rownames(meta_data)<-colnames(counts_data)
+  dds <- DESeqDataSetFromMatrix(countData =counts_data,
+                              colData = meta_data,
+                              design= ~ design )
+  dds <- DESeq(dds)
+  resultsNames(dds)
+  vsd <- vst(dds, blind=TRUE)
+  pl <- plotPCA(vsd, 
+              intgroup=c(group,"sizeFactor"), 
+              returnData = TRUE)
+  percentVar <- round(100 * attr(pl, "percentVar"))
+}
