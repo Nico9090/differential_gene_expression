@@ -25,7 +25,6 @@ library(goseq)
 library(dplyr)
 #_______________________________________________________________________________
 #FASTQs are aligned to gtf 
-#ADD GENE NAMES_________________________________________________________________
 counts_csv<-"" #should have gene names from ens_names.R
 counts<-read_csv(counts_csv) 
 #PCA PLOT_______________________________________________________________________
@@ -44,4 +43,26 @@ make_PCA<-function(counts_data,design,group,...){
               intgroup=c(group,"sizeFactor"), 
               returnData = TRUE)
   percentVar <- round(100 * attr(pl, "percentVar"))
+  return(list(
+    dds=dds,
+    pl=pl,
+    percentVar=percentVar))
+}
+plot_PCA<-function(pl,percentVar,title){
+  ggplot(pl,aes(PC1,PC2,
+                shape=sex,
+                pointsize = 5)) + #plot
+  geom_point(size=5) +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) +
+  ggtitle(title) +
+  theme(
+    axis.title.x = element_text(size = 25, face = "bold"),
+    axis.title.y = element_text(size = 25, face = "bold"),
+    axis.text.x = element_text(size = 20, face = "bold"),
+    axis.text.y = element_text(size = 20, face = "bold"),
+    legend.text = element_text(size = 25, face = "bold"),
+    legend.title = element_text(size = 25,  face = "bold"),
+    plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
+  )
 }
