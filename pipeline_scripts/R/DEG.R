@@ -66,3 +66,36 @@ plot_PCA<-function(pl,percentVar,title){
     plot.title = element_text(size = 20, face = "bold", hjust = 0.5)
   )
 }
+
+plot_Volcano<-function(dds,title){
+  ### Deseq2 differential expression calculation
+  res <- results(dds)#, name="condition_WT_vs_L1")
+  res_df <- as.data.frame(res)
+  res_df$gene_name <- counts$external_gene_name
+  res_df$Gene_ID<-counts$Gene_ID
+  res_df$color <- ifelse(res_df$log2FoldChange > 0, "blue", 
+                       ifelse(res_df$log2FoldChange < 0, "red", "gray"))
+  top_genes <- head(res_df[order(res_df$padj), ], 10) #change to any number of wanted genes
+  ggplot(res_df,
+       aes(x = log2FoldChange, 
+           y = -log10(pvalue))
+       ) +
+  geom_point(aes(color = color), 
+             alpha = 0.6) +
+  scale_color_manual(values = c("red", "blue", "gray")) +
+  theme_minimal() +
+  labs(title = title, 
+       x = "log2 Fold Change", 
+       y = "-log10 p-value"
+       ) +
+  theme(axis.title.x = element_text(size = 18, face = "bold", family = "Courier"),
+        axis.title.y = element_text(size = 18, face = "bold", family = "Courier"),
+        axis.text.x = element_text(size = 14, face = "plain", family = "Courier"),
+        axis.text.y = element_text(size = 14, face = "plain", family = "Courier"),
+        plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+        legend.position = "none")+ 
+  geom_text_repel(data = top_genes, aes(label = top_genes$gene_name, 
+                                        size = 3,
+                                        family = "Courier"))
+  return(res_df)
+}
