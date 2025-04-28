@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import pandas as pd
+from collections import defaultdict
 #BW transform__________________________________________
 class BWT:
     def __init__(self,string):
@@ -7,7 +8,7 @@ class BWT:
     def left_circular_shift(self):
         all_left_circular_shifts=[]
         x=0
-        temp_string=self.string #use temp variable to avoid permanently changing self.string
+        temp_string=self.string
         for i in range(len(self.string)):
             all_left_circular_shifts.append(temp_string[1:]+temp_string[0])
             temp_string=temp_string[1:]+temp_string[0]
@@ -26,7 +27,19 @@ class BWT:
         }
         df=pd.DataFrame(data)
         return df
+
+    def c_array(self):
+        df = self.BWT_data_frame()
+        chars = defaultdict(int)
+        for letter in df["BWT"]:
+            if letter != "$":
+                chars[letter] += 1
+        #chars=dict(sorted(chars.items()))
+        #array_c={char:0 for char in chars}
+        return chars
+
 seq="GACTATATCCTAAATACCCGCACCATTACCGACACCCGTGGCCCAAGCAG"
 
 data=BWT(seq)
-print(data.BWT_data_frame())
+print(data.c_array())
+
