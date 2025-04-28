@@ -30,16 +30,20 @@ class BWT:
 
     def c_array(self):
         df = self.BWT_data_frame()
-        chars = defaultdict(int)
-        for letter in df["BWT"]:
+        chars={char:0 for char in self.string if char != "$"}
+        for letter in self.string:
             if letter != "$":
                 chars[letter] += 1
-        #chars=dict(sorted(chars.items()))
-        #array_c={char:0 for char in chars}
+        chars=sorted(chars.keys())
+        array_c={char:0 for char in chars}
+        second_of_chars=list(chars.keys())[1]
+        second_char=list(array_c.keys())[1]
+        array_c[second_char]+=second_of_chars
         return chars
 
 seq="GACTATATCCTAAATACCCGCACCATTACCGACACCCGTGGCCCAAGCAG"
 
 data=BWT(seq)
 print(data.c_array())
+
 
