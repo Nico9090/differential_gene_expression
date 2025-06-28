@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FQalign</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            margin: 2rem;
+            max-width: 700px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+            margin-bottom: 1rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        #output {
+            white-space: pre-wrap;
+            margin-top: 1rem;
+            background: #f7f7f7;
+            padding: 1rem;
+            border-radius:5px;
+            max-height:300px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body><!-- actually displays on page -->
+    <h1>FQaligner</h1> 
+    <label for="genomeInput">Add reference genome</label><br/>
+    <textarea id="genomeInput" placeholder=">chr1"></textarea> <!-- where user can type, adds box -->
+
+    <label for="readsInput">Add reads</label><br/>
+    <textarea id="readsInput"></textarea>
+
+    <button id="Align">Align Reads</button> <!-- when button is clicked, javascript runs -->
+    <h2>Results:</h2>
+    <pre id="output">Results here</pre>
+    
+    <script type="module" src="js/BWT.js"></script>
+</body>    
+</html>
