@@ -1,0 +1,117 @@
+---
+title: "pkd proteome"
+author: "Me"
+date: "2025-07-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+pkgs<-c("tidyverse","EnhancedVolcano","dplyr",
+        "org.Mm.eg.db")
+lapply(pkgs,library,character.only=TRUE) #lapply(list,function)
+```
+
+```{r}
+rw<-read.delim("GSE229268_core_table-r26_Pax-rtTA.txt.gz",
+               header=TRUE)
+head(rw,10)
+colnames(rw)
+
+#NICD vs NICD pax cre
+deg.rw<-tibble(rw[["gene_id_alias"]],
+               rw[["diffexp_log2fc_NICD.vs.NICD_Pax"]],
+               rw[["diffexp_pvalue_NICD.vs.NICD_Pax"]])
+colnames(deg.rw)<-c("gene.symbol","log2FC_NCIDvsNCID_pax","pval_NCIDvsNCID_pax")
+deg.rw<-deg.rw %>%
+  filter(if_all(everything(), ~!is.na(.))) #asked CHATGPT how to only keep non-na rows
+
+write_csv(deg.rw,"ncid_paxKO1deg.csv")
+volc.ncid.pax<-EnhancedVolcano(deg.rw,
+                               lab = deg.rw[["gene.symbol"]],
+                               x="log2FC_NCIDvsNCID_pax",
+                               y="pval_NCIDvsNCID_pax",
+                               pCutoff = 0.05,
+                               FCcutoff = 1.5,
+                               xlim=c(-6,6)
+)
+#<---Gene Set Enrichment Analysis---->
+#Function
+gseago.fn<-function(deg.table,gene.col.name,fc.col,organism){
+  library(clusterProfiler)
+  library(enrichplot)
+  library(ggplot2)
+  library(org.Mm.eg.db)
+  geneList <- deg.table[[fc.col]]
+  names(geneList) <- deg.table[[gene.col.name]]
+  gse <- gseGO(geneList=sort(geneList,
+                             decreasing = TRUE), 
+             ont ="ALL", 
+             keyType = "SYMBOL", 
+             nPerm = 10000, 
+             minGSSize = 3, 
+             maxGSSize = 800, 
+             pvalueCutoff = 0.05, 
+             verbose = TRUE, 
+             OrgDb = organism, 
+             pAdjustMethod = "none")
+  return(list(go.obj=gse))
+}
+
+ncid.pax.gsea<-gseago.fn(deg.rw,
+                         "gene.symbol",
+                         "log2FC_NCIDvsNCID_pax",
+                         org.Mm.eg.db)
+
+ncid.pax.go<-ncid.pax.gsea[["go.obj"]]
+ncid.pax.godot<-dotplot(ncid.pax.go, showCategory=5, split=".sign") + facet_grid(.~.sign) + labs(caption = "Enriched Pathways in notch signaling mutant pkd mice")
+
+ncid.pax.go <- pairwise_termsim(ncid.pax.go)
+node.edge<-emapplot(ncid.pax.go, showCategory = 10)
+
+
+
+saveRDS(ncid.pax.go, file = "ncid_pax_go.rds")
+ggsave("ncid_pax_rep1_node_edge.png", plot = node.edge, width = 6, height = 4, dpi = 300)
+
+```
+
+```{r}
+deg.df1<-tibble(gene.symbol=rw[["gene_id_alias"]],
+               log2fc_NICD324.vs.NICD_Pax325=rw[["diffexp_log2fc_NICD324.vs.NICD_Pax325"]],
+               pvalue_NICD324.vs.NICD_Pax325=rw[["diffexp_pvalue_NICD324.vs.NICD_Pax325"]])
+
+deg.df1<-deg.df1 %>%
+  filter(if_all(everything(), ~!is.na(.)))
+write_csv(deg.df1,"ncid_paxKO2deg.csv")
+volc.ncid.pax2<-EnhancedVolcano(deg.df1,
+                               lab = deg.df1[["gene.symbol"]],
+                               x="log2fc_NICD324.vs.NICD_Pax325",
+                               y="pvalue_NICD324.vs.NICD_Pax325",
+                               pCutoff = 0.05,
+                               FCcutoff = 1.5,
+                               xlim=c(-6,6)
+)
+ncid.pax2.gsea<-gseago.fn(deg.df1,
+                         "gene.symbol",
+                         "log2fc_NICD324.vs.NICD_Pax325",
+                         org.Mm.eg.db)
+
+ncid.pax2.go<-ncid.pax2.gsea[["go.obj"]]
+ncid.pax2.godot<-dotplot(ncid.pax2.go, showCategory=5, split=".sign") + facet_grid(.~.sign) + labs(caption = "Enriched Pathways in notch signaling mutant pkd mice rep2")
+
+ncid.pax2.go <- pairwise_termsim(ncid.pax2.go)
+node.edge2<-emapplot(ncid.pax2.go, showCategory = 10)
+
+saveRDS(ncid.pax2.go, file = "ncid_pax_2_go.rds")
+ggsave("ncid_pax_rep2_go.png", plot = ncid.pax2.godot, width = 6, height = 4, dpi = 300)
+
+ncid.pax2.go.df<-tibble(GO.term=ncid.pax2.go@result[["ID"]],
+                        GO.desc=ncid.pax2.go@result[["Description"]],
+                        GO.genes=ncid.pax2.go@result[["setSize"]])
+
+go.genes<-ncid.pax2.go@geneSets[["GO:0097447"]]
+dendr.tree<-deg.df1[deg.df1[["gene.symbol"]]%in% go.genes,]
+write_csv(dendr.tree,"dendritic_treeDEGinnotchKO.csv")
+
+```
+
