@@ -73,4 +73,5 @@ dis_normal_organ_dep<-limma_fit_for_deg(counts = intensities_organ,
                                         meta_data = meta_data2,
                                         sample_identifier_by = "condition"
 )
+
 dis_normal_organ_dep[["protein"]]<-proteins$`Gene names`
