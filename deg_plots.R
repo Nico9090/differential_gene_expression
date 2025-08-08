@@ -32,3 +32,17 @@ ggplot2::ggplot(deg_table[deg_table$gene_name %in%
        ") +
   theme_minimal()
 
+#Reactome 
+entrez_ids <- bitr(hs_deg$gene.symbol,
+                   fromType = "SYMBOL",
+                   toType = "ENTREZID",
+                   OrgDb = org.Hs.eg.db)
+
+
+reactome_enrich <- enrichPathway(gene = entrez_ids$ENTREZID,
+                                 organism = "human",  # or "mouse", etc.
+                                 pvalueCutoff = 0.05,
+                                 readable = TRUE)
+barplot(reactome_enrich, showCategory = 5)
+
+
