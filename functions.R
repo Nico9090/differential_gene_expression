@@ -40,6 +40,72 @@ gseago_fn<-function(deg_table,gene_col_name,fc_col,organism){
                pAdjustMethod = "none")
   return(list(go_obj=gse))
 }
+gene_set_enrichment <- function(deg_table,
+                                gene_column,
+                                fold_change_column,
+                                organism_db,
+                                ontology_class = "BP",
+                                pvalue_cutoff = 0.05,
+                                p_adjust_method = "BH",
+                                key_type = "SYMBOL",
+                                min_gs_size = 3,
+                                max_gs_size = 800) {
+  
+  # Load required libraries
+  if (!requireNamespace("clusterProfiler", quietly = TRUE) ||
+      !requireNamespace("enrichplot", quietly = TRUE) ||
+      !requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Required packages: clusterProfiler, enrichplot, ggplot2.")
+  }
+  library(clusterProfiler)
+  library(enrichplot)
+  library(ggplot2)
+  
+  # Validate columns
+  if (!all(c(gene_column, fold_change_column) %in% colnames(deg_table))) {
+    stop("Provided column names not found in 'deg_table'.")
+  }
+  
+  # Validate OrgDb
+  if (is.character(organism_db)) {
+    # Try to load the OrgDb object from the namespace
+    if (!requireNamespace(organism_db, quietly = TRUE)) {
+      stop("OrgDb package not found: ", organism_db)
+    }
+    organism_db <- get(organism_db, envir = asNamespace(organism_db))
+  }
+  if (!inherits(organism_db, "OrgDb")) {
+    stop("'organism_db' must be an OrgDb object or a valid package name.")
+  }
+  
+  # Build geneList
+  geneList <- deg_table[[fold_change_column]]
+  names(geneList) <- deg_table[[gene_column]]
+  
+  # Remove NAs and sort
+  geneList <- geneList[!is.na(names(geneList)) & !is.na(geneList)]
+  geneList <- sort(geneList, decreasing = TRUE)
+  
+  # Run GSEA
+  gse_result <- tryCatch({
+    gseGO(
+      geneList = geneList,
+      ont = ontology_class,
+      keyType = key_type,
+      minGSSize = min_gs_size,
+      maxGSSize = max_gs_size,
+      pvalueCutoff = pvalue_cutoff,
+      pAdjustMethod = p_adjust_method,
+      verbose = FALSE,
+      OrgDb = organism_db
+    )
+  }, error = function(e) {
+    warning("gseGO failed: ", e$message)
+    return(NULL)
+  })
+  
+  return(list(go_obj = gse_result))
+}
 
 convert_id.fn<-function(gene.ids,affy.org.db){
   library(mouse4302.db)
