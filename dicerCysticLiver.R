@@ -244,7 +244,7 @@ goRes %>%
 
 
 
-del34Liv<-readr::read_csv("~/omics_DS/rna_seq/cnric/deg/D1_WT_malelivDEG.csv")
+del34Liv<-readr::read_csv("~/")
 del34GeneInformation <- bitr(geneID = del34Liv$gene_name,
                              fromType = "SYMBOL",
                              toType = "ENTREZID",
