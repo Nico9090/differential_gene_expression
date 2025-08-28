@@ -1,47 +1,39 @@
-del34KidGo <- read_csv("name1GoTerms.csv")
-del34LivGo <- read_csv("name2GoTerms.csv")
+Pkd1KoGo <- read_csv("Pkd1KoMouseKidneyGoTerms.csv")
+glis3KoGo <- read_csv("glis3KoMouseKidneyGoTerms.csv")
+doubleKoGo <-read_csv("DoubleKoMouseKidneyGoTerms.csv")
 
-l1KidGo <- read_csv("name3GoTerms.csv")
-l1LivGo <- read_csv("name4GoTerms.csv")
 #so they have same number of GO terms
-nrow(del34KidGo)
-nrow(del34LivGo)
-nrow(l1KidGo)
-nrow(l1LivGo) #least
+nrow(Pkd1KoGo)
+nrow(glis3KoGo)
+nrow(doubleKoGo) #least
 
-del34KidGo <- del34KidGo[del34KidGo$category %in%
-                           l1LivGo$category,]
-del34LivGo <- del34LivGo[del34LivGo$category %in%
-                           l1LivGo$category,]
-l1KidGo <- l1KidGo[l1KidGo$category %in%
-                           l1LivGo$category,]
+Pkd1KoGo <- Pkd1KoGo[Pkd1KoGo$category %in%
+                       doubleKoGo$category,]
+glis3KoGo <- glis3KoGo[glis3KoGo$category %in%
+                         doubleKoGo$category,]
+
 goTibble <- tibble(
-  goId = del34KidGo$category,
-  goDesc= del34KidGo$term,
-  pvalDel34Kid = del34KidGo$over_represented_pvalue,
-  pvalDel34Liv = del34LivGo$over_represented_pvalue,
-  pvalL1Kid = l1KidGo$over_represented_pvalue,
-  pvalL1Liv = l1LivGo$over_represented_pvalue,
-  logFcDel34Kid = del34KidGo$avgLog2FC,
-  logFcDel34Liv = del34LivGo$avgLog2FC,
-  logFcL1Kid = l1KidGo$avgLog2FC,
-  logFcL1Liv = l1LivGo$avgLog2FC
+  goId = Pkd1KoGo$category,
+  goDesc= Pkd1KoGo$term,
+  pvalPkd1 = Pkd1KoGo$over_represented_pvalue,
+  pvalglis3 = glis3KoGo$over_represented_pvalue,
+  pvalDoubleKo = doubleKoGo$over_represented_pvalue,
+  logFcPkd1 = Pkd1KoGo$avgLog2FC,
+  logFcglis3 = glis3KoGo$avgLog2FC,
+  logFcDoubleKo = doubleKoGo$avgLog2FC
 )
 
 goOfInterest <- goTibble %>%
-  dplyr::filter(goId %in% c("GO:0046649",
-                            "GO:0051249",
-                            "GO:0002757",
-                            "GO:0050853",
-                            "GO:0042110",
-                            "GO:0031294",
-                            "GO:0042110",
-                            "GO:0050870"))
+  dplyr::filter(goId %in% c("GO:0043410",
+                            "GO:0043408",
+                            "GO:0000165",
+                            "GO:1900745",
+                            "GO:1900744",
+                            "GO:0038066"))
 edges <- goOfInterest %>%
-  mutate(xStart = 1,xP1=2,xP2=3, xEnd = 4,
-         yStart = 2**logFcDel34Kid,yP1=2**logFcL1Kid,
-         yP2=2**logFcL1Liv,
-         yEnd   = 2**logFcDel34Liv)
+  mutate(xStart = 1,xP1=2, xEnd = 3,
+         yStart = 2**logFcPkd1,yP1=2**logFcglis3,
+         yEnd   = 2**logFcDoubleKo)
 
 ggplot() +
   geom_curve(
@@ -53,53 +45,83 @@ ggplot() +
     curvature = 0.2, alpha = 0.6
   ) +
   scale_y_continuous(limits = c(-10, 10)) +
-  scale_x_continuous(breaks = c(1,2,3,4), labels = c("Del 3-4 Kidney",
-                                                     "L1 Kidney",
-                                                     "L1 Liver",
-                                                     "Del 3-4 Liver")) +
+  scale_x_continuous(breaks = c(1,2,3), labels = c("Pkd1 KO",
+                                                     "Glis3 KO",
+                                                     "Double KO")) +
   theme_minimal() +
-  labs(y = "Significance", x = "",
+  labs(y = "LogFC", x = "",
        caption = "Go Terms")
 
 
 
-
-
-
-
-
-
-
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-
-edges_long <- edges %>%
-  left_join(goLong, by = "goDesc")
-
-edges_points <- edges_long %>%
-  # build start points
-  transmute(goDesc, pval, condition,
-            x = xStart, y = yStart, end = "Start") %>%
-  bind_rows(
-    edges_long %>%
-      transmute(goDesc, pval, condition,
-                x = xEnd, y = yEnd, end = "End")
+goPoints <- goOfInterest %>%
+  dplyr::select(goDesc, logFcPkd1, logFcglis3, logFcDoubleKo) %>%
+  pivot_longer(
+    cols = starts_with("logFc"),
+    names_to = "condition",
+    values_to = "logFC"
+  ) %>%
+  mutate(
+    x = case_when(
+      condition == "logFcPkd1" ~ 1,
+      condition == "logFcglis3" ~ 2,
+      condition == "logFcDoubleKo" ~ 3
+    ),
+    condition = factor(condition, levels = c("logFcPkd1", "logFcglis3", "logFcDoubleKo"))
   )
-# Now you have columns: x, y, end (Start/End), plus goDesc, pval, condition
-
-# 2. Plot with geom_point()
-ggplot(edges_points, aes(x = x, y = y,
-                         size = -log10(pval),
-                         color = goDesc)) +
-  geom_point(alpha = 0.7,shape = 3, stroke=4) +
-  scale_size(range = c(1, 6)) +
-  scale_y_continuous(limits = c(-10, 10)) +
-  scale_x_continuous(breaks = c(1,2,3,4),
-                     labels = c("Del 3-4 Kidney",
-                                "L1 Kidney",
-                                "L1 Liver",
-                                "Del 3-4 Liver")) +
+ggplot(goPoints, aes(x = x, y = logFC, color = goDesc)) +
+  geom_point(shape=4,stroke=4,
+    position = position_dodge(width = 0.4),
+    size = 3, alpha = 4
+  ) +
+  geom_line(aes(group = goDesc), position = position_dodge(width = 0.4), alpha = 0.5)+
+  scale_x_continuous(
+    breaks = c(1, 2, 3),
+    labels = c("Pkd1 KO", "Glis3 KO", "Double KO")
+  ) +
   theme_minimal() +
-  labs(y = "Fold Change", x = "",
-       caption = "GO Terms")
+  labs(x = "", y = "log2 Fold Change", color = "GO Term") +
+  theme(
+    axis.text.x = element_text(size = 12),
+    legend.position = "right"
+  )
+
+
+
+
+goPoints <- goOfInterest %>%
+  dplyr::select(goDesc,
+         logFcPkd1, logFcglis3, logFcDoubleKo,
+         pvalPkd1, pvalglis3, pvalDoubleKo) %>%
+  pivot_longer(
+    cols = c(logFcPkd1, logFcglis3, logFcDoubleKo,
+             pvalPkd1, pvalglis3, pvalDoubleKo),
+    names_to = c(".value", "condition"),
+    names_pattern = "(logFc|pval)(.*)"
+  ) %>%
+  mutate(
+    x = case_when(
+      condition == "Pkd1" ~ 1,
+      condition == "glis3" ~ 2,
+      condition == "DoubleKo" ~ 3
+    ),
+    condition = factor(condition, levels = c("Pkd1", "glis3", "DoubleKo"))
+  )
+ggplot(goPoints, aes(x = x, y = logFc, color = goDesc)) +
+  geom_point(
+    aes(size = -log10(pval)),
+    position = position_dodge(width = 0.4),
+    alpha = 0.8
+  ) +
+  geom_line(aes(group = goDesc), position = position_dodge(width = 0.4), alpha = 0.5)+
+  scale_x_continuous(
+    breaks = c(1, 2, 3),
+    labels = c("Pkd1 KO", "Glis3 KO", "Double KO")
+  ) +
+  scale_size_continuous(name = "-log10(p-value)") +
+  theme_minimal() +
+  labs(x = "", y = "log2 Fold Change", color = "GO Term") +
+  theme(
+    axis.text.x = element_text(size = 12),
+    legend.position = "right"
+  )
