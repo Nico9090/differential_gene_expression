@@ -130,3 +130,60 @@ DESeq2.fn<-function(raw.counts,meta.data,design){
   res <- results(dds)
   return(list(dds_res=res,dds=dds))
 }
+
+library(visNetwork)
+library(dplyr)
+library(stringr)
+library(biomaRt)
+enrichGOHelperFunction <- function(geneSymbols,orgDb,ont){
+  enrichGO(gene = geneSymbols,
+           OrgDb = orgDb,
+           keyType = "SYMBOL",
+           ont = ont) %>%
+    as.data.frame() %>%     
+    as_tibble() %>%
+    dplyr::select(Description, p.adjust, geneID) %>%
+    dplyr::filter(p.adjust <= 0.05)
+}
+
+stringDBHelperFunction <- function(geneSymbols){
+  #orgId for mouse == 100900
+  stringDB <- STRINGdb$new(version="11.5", species=10090, score_threshold=400)
+  mapped <- stringDB$map(data.frame(gene=geneSymbols),
+                         "gene",
+                         removeUnmappedRows=TRUE)
+  
+  interactions <- stringDB$get_interactions(mapped$STRING_id)
+  proteinIds <- unique(c(interactions$from,
+                         interactions$to))
+  proteinIdsClean <- gsub("10090\\.", "",
+                          proteinIds) #change if needed
+  mapping <- getBM(
+    attributes = c("ensembl_peptide_id", "external_gene_name"),
+    filters = "ensembl_peptide_id",
+    values = proteinIdsClean,
+    mart = ensembl
+  )
+  return(list(mapping = mapping,
+              interactions = interactions))
+  
+}
+
+plotVisNet <- function(mapping, interactions){
+  # Create node list
+  proteinIds <- unique(c(interactions$from, interactions$to))
+  nodes <- data.frame(id = proteinIds, stringsAsFactors = FALSE)
+  
+  nodes <- nodes %>%
+    mutate(cleanId = str_replace(id, "10090\\.", ""),
+           label = mapping$external_gene_name[match(cleanId, mapping$ensembl_peptide_id)])
+  
+  edges <- data.frame(
+    from = interactions$from,
+    to = interactions$to,
+    width = interactions$combined_score / 200
+  )
+  
+  visNetwork(nodes, edges) %>%
+    visPhysics(enabled = FALSE)
+}
