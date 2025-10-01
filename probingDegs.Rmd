@@ -1,0 +1,266 @@
+---
+title: "Assay Dev"
+output: html_document
+date: "2025-09-30"
+---
+```{r}
+library(tidyverse)
+library(clusterProfiler)
+library(org.Mm.eg.db)
+library(STRINGdb)
+library(visNetwork)
+library(biomaRt)
+```
+
+```{r setup, include=FALSE}
+del34LiverDeg 
+sig <- del34LiverDeg %>%
+  dplyr::filter(padj <= 0.05)
+
+enrichGOHelperFunction <- function(geneSymbols,orgDb,ont){
+  enrichGO(gene = geneSymbols,
+           OrgDb = orgDb,
+           keyType = "SYMBOL",
+           ont = ont) %>%
+    as.data.frame() %>%     
+    as_tibble() %>%
+    dplyr::select(Description, p.adjust, geneID) %>%
+    dplyr::filter(p.adjust <= 0.05)
+}
+del34LiverGo <- enrichGOHelperFunction(geneSymbols = sig$gene_name,
+                                       orgDb = org.Mm.eg.db,ont = "BP")
+```
+
+```{r}
+epithelialCellDev <- del34LiverGo %>%
+  dplyr::filter(Description == "cell-substrate adhesion") %>%
+  dplyr::select(geneID) %>%
+  str_split("/")%>%
+  unlist
+
+epithelialCellDevGenes <- del34LiverDeg %>%
+  dplyr::filter(gene_name %in% epithelialCellDev)
+
+epithelialCellDevGenes_CC <- enrichGOHelperFunction(geneSymbols = epithelialCellDevGenes$gene_name,
+                                            orgDb = org.Mm.eg.db,
+                                            ont = "CC")
+
+epithelialCellDevGenes_MF <- enrichGOHelperFunction(geneSymbols = epithelialCellDevGenes$gene_name,
+                                            orgDb = org.Mm.eg.db,
+                                            ont = "MF")
+group_annotations <- tribble(
+  ~cell_component_group, ~genes,
+  "focal adhesion", epithelialCellDevGenes_CC %>%
+    dplyr::filter(Description == "focal adhesion") %>%
+    dplyr::select(geneID)%>%
+    unlist,
+  "collagen trimer", epithelialCellDevGenes_CC %>%
+    dplyr::filter(Description == "collagen trimer") %>%
+    dplyr::select(geneID)%>%
+    unlist,
+  "brush border", epithelialCellDevGenes_CC %>%
+    dplyr::filter(Description == "brush border") %>%
+    dplyr::select(geneID)%>%
+    unlist,
+  "SMAD protein complex",epithelialCellDevGenes_CC %>%
+    dplyr::filter(Description == "SMAD protein complex") %>%
+    dplyr::select(geneID)%>%
+    unlist,
+  "integrin complex",epithelialCellDevGenes_CC %>%
+    dplyr::filter(Description == "integrin complex") %>%
+    dplyr::select(geneID)%>%
+    unlist
+)
+
+
+gene_group_map <- group_annotations %>%
+  tidyr::separate_rows(genes, sep = "/") %>%
+  dplyr::rename(gene = genes)
+
+epithelialCellDevGenes_annotated <- epithelialCellDevGenes %>%
+  dplyr::left_join(gene_group_map, by = c("gene_name" = "gene")) %>%
+  mutate(cell_component_group = coalesce(cell_component_group,
+                                         "other"))
+
+
+toPlot <- epithelialCellDevGenes_annotated %>%
+  dplyr::filter(cell_component_group != "other")
+
+
+
+
+
+
+ggplot(toPlot, aes(x = reorder(gene_name, log2FoldChange),
+                   y = log2FoldChange,
+                   fill = log2FoldChange)) +
+  geom_col() +
+  facet_wrap(~ cell_component_group, scales = "free_y") +
+  coord_flip() +
+  scale_fill_gradient2(low = "steelblue", mid = "white", high = "red4", midpoint = 0) +
+  labs(title = "cell-substrate adhesion DEGs",
+       x = "Gene Symbol",
+       y = expression(log[2]("Fold Change")),
+       fill = "Log2FC") +
+  theme_minimal(base_size = 10) +
+  theme(
+  legend.position = "none",
+  strip.text = element_text(face = "bold"),
+  axis.text.y = element_text(size = 10),   # keep this one
+  panel.spacing = unit(1, "lines"),
+  axis.title.x = element_text(margin = margin(t = 10)),
+  axis.text.x = element_text(size = 9),
+  strip.background = element_rect(fill = "grey90", color = NA)
+)
+```
+```{python}
+import requests
+
+def searchProteinByName(protein_names, limit=1):
+    """
+    Search UniProt by a list of protein names and return a dict of {name: [UniProt IDs]}.
+    """
+    url = "https://rest.uniprot.org/uniprotkb/search"
+    results_dict = {}
+
+    for name in protein_names:
+        params = {
+            "query": name,
+            "format": "json",
+            "size": limit
+        }
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        results = response.json()
+        
+        ids = [entry["primaryAccession"] for entry in results.get("results", [])]
+        results_dict[name] = ids
+    
+    return results_dict
+```
+
+```{python}
+
+listofProteinNames = r.epithelialCellDev
+print(listofProteinNames)
+proteinIds = searchProteinByName(listofProteinNames)
+print(proteinIds)
+```
+```{python}
+def getProteinDescriptions(uniprotId):
+  url = f"https://rest.uniprot.org/uniprotkb/{uniprotId}.json"
+  response = requests.get(url)
+  response.raise_for_status()
+  output = response.json()
+  #sequence = output.get()
+  return output['comments'][0:3]
+```
+
+```{python}
+getProteinDescriptions("Q3UE96")#['texts'][0]['value']
+```
+```{python}
+import pandas as pd
+rows = []
+for name, ids in proteinIds.items():
+    for uid in ids:
+      try:
+        info = getProteinDescriptions(uid)
+        rows.append({
+            "proteinName": name,
+            "uniprotId": uid,
+            "description": info
+        })
+      except (KeyError,IndexError):
+        rows.append({
+            "proteinName": name,
+            "uniprotId": uid,
+            "description": "N/A"
+        })
+
+proteinTable = pd.DataFrame(rows)
+```
+
+```{python}
+print(proteinTable.head(20))
+proteinTable.to_csv("cellsubstrAdhesionGenesInDel34Liver.csv")
+```
+```{r}
+geneDescriptions <- read_csv("epithDevGenesInDel34Liver.csv")
+```
+```{r}
+stringDBHelperFunction <- function(geneSymbols){
+  #orgId for mouse == 100900
+  stringDB <- STRINGdb$new(version="11.5", species=10090, score_threshold=400)
+  mapped <- stringDB$map(data.frame(gene=geneSymbols),
+                         "gene",
+                         removeUnmappedRows=TRUE)
+  
+  interactions <- stringDB$get_interactions(mapped$STRING_id)
+  proteinIds <- unique(c(interactions$from,
+                         interactions$to))
+  proteinIdsClean <- gsub("10090\\.", "",
+                          proteinIds) #change if needed
+  ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  mapping <- getBM(
+    attributes = c("ensembl_peptide_id", "external_gene_name"),
+    filters = "ensembl_peptide_id",
+    values = proteinIdsClean,
+    mart = ensembl
+  )
+  return(list(mapping = mapping,
+              interactions = interactions))
+  
+}
+
+plotVisNet <- function(mapping, interactions){
+  # Create node list
+  proteinIds <- unique(c(interactions$from, interactions$to))
+  nodes <- data.frame(id = proteinIds, stringsAsFactors = FALSE)
+  
+  nodes <- nodes %>%
+    mutate(cleanId = str_replace(id, "10090\\.", ""),
+           label = mapping$external_gene_name[match(cleanId, mapping$ensembl_peptide_id)])
+  
+  edges <- data.frame(
+    from = interactions$from,
+    to = interactions$to,
+    width = interactions$combined_score / 200
+  )
+  
+  visNetwork(nodes, edges) %>%
+    visPhysics(enabled = FALSE)
+}
+```
+
+```{r}
+forString <- del34LiverGo %>%
+  dplyr::filter(Description == "epithelial cell development")%>%
+  dplyr::select(geneID) %>%
+  str_split("/") %>%
+  unlist
+
+string <- stringDBHelperFunction(geneSymbols = forString)
+plotVisNet(mapping = string$mapping,
+           interactions = string$interactions)
+```
+
+```{r}
+target_gene <- "Vegfa"
+
+target_ids <- string$mapping %>%
+  filter(external_gene_name == target_gene) %>%
+  pull(ensembl_peptide_id)
+
+filtered_interactions <- string$interactions %>%
+  mutate(from_clean = str_split(from, "\\.", simplify = TRUE)[,2]) %>%
+  filter(from_clean %in% target_ids | to %in% target_ids)
+proteins_in_network <- unique(c(filtered_interactions$from, filtered_interactions$to))
+
+filtered_mapping <- string$mapping %>%
+  filter(ensembl_peptide_id %in% str_split(proteins_in_network,
+                                           "\\.",simplify = TRUE)[,2])
+plotVisNet(mapping = filtered_mapping,
+           interactions = filtered_interactions)
+```
+
