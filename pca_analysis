@@ -1,0 +1,96 @@
+raw <- read_csv(".csv")
+rs <- rowSums(raw[ , -c(1,27)], na.rm = TRUE)
+raw_filtered <- raw[rs > 10, ]
+only_counts <- raw_filtered[,-c(1,27)]
+
+
+meta_data <- tibble(samples = names(only_counts),
+                    genotype = c(rep("L1",6),rep("WT",7),
+                                 rep("D1",3),"WT","L1",
+                                 rep("D1",3),"L1",rep("WT",3),
+                                 "L1"),
+                    sex = c("M","F",rep("M",4),"F","M",
+                            rep("F",3),"M","F",rep("M",4),
+                            "F",rep("M",3),"F","M","F",
+                            rep("M",2)
+                            ),
+                    tissue = c(rep("kidney",2),"liver",
+                               rep("kidney",6),rep("liver",4),
+                               rep("kidney",2),rep("liver",6),
+                               rep("kidney",4),"liver"))
+meta_data$genotype <- factor(
+  meta_data$genotype,
+  levels = c("WT", "D1", "L1")
+)
+
+meta_data$sex <- factor(meta_data$sex,
+                        levels = c("F","M"))
+meta_data$tissue <- factor(meta_data$tissue,
+                           levels = c("kidney","liver"))
+
+dds <- DESeqDataSetFromMatrix(countData =only_counts,
+                              colData = meta_data,
+                              design= ~ genotype + sex + tissue)
+dds <- DESeq(dds)
+resultsNames(dds)
+vsd <- vst(dds, blind=TRUE)
+expr_matrix <- assay(vsd)
+pca <- prcomp(t(expr_matrix))
+loadings <- as.data.frame(pca$rotation)
+loadings$Gene_ID <- raw_filtered$Gene_ID
+loadings$external_gene_name <- raw_filtered$external_gene_name
+
+
+
+driving_pc1 <- loadings[order(abs(loadings$PC1),
+                              decreasing = TRUE)[1:20], ]
+
+ggplot(driving_pc1,
+       aes(x = reorder(external_gene_name, PC1),
+           y = PC1)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "Top gene loadings for PC1")
+
+
+pl <- plotPCA(vsd, 
+              intgroup=c("genotype","sex","tissue"), 
+              returnData = TRUE)
+percentVar <- round(100 * attr(pl, "percentVar"))
+pl <- pl %>%
+  dplyr::mutate(fill_tissue = case_when())
+pl$fill_tissue <- ifelse(pl$tissue == "kidney",
+                         pl$genotype,
+                             NA)
+
+
+
+
+library(ggplot2)
+
+ggplot(pl,aes(PC1,PC2,
+              color = genotype,shape = sex,
+              fill = tissue)) + 
+  geom_point(size =8,stroke = 2) +
+  xlab(paste0("PC1: (",percentVar[1],"%)")) +
+  ylab(paste0("PC2: (",percentVar[2],"%)")) +
+  scale_shape_manual(
+    values = c("F" = 21, "M" = 22)
+  ) +
+  
+  scale_fill_manual(values = c("kidney" = "blue",
+                               "liver" = "white"))+
+  scale_color_manual(values = c("D1" = "red",
+                                "L1" = "steelblue",
+                                "WT" = "green3"))+
+  ggtitle(label = "All Samples")+
+  theme(
+    plot.title = element_text(size = 25,face = "bold"),
+    axis.title.x = element_text(size = 15,face = "bold"),
+    axis.title.y = element_text(size = 15,face = "bold"),
+    axis.text.x = element_text(size = 10,face = "bold"),
+    axis.text.y = element_text(size = 10,face = "bold"),
+    legend.text = element_text(size = 15,face = "bold"),
+    legend.title = element_text(size = 15,face = "bold"),
+    panel.background = element_rect(fill = "white")
+  )
